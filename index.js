@@ -11,8 +11,11 @@ var Jimp = require("jimp");
 */
 const app = express();
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+// app.use(express.bodyParser({limit: '50mb'}))
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb" }));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: false }));
 // app.use(express.json());
 
 const rows = [{ id: 1 }, { id: 2 }];
@@ -29,21 +32,28 @@ app.get("/testdata", (req, res, next) => {
 
 app.post("/uploadImage", async (req, res) => {
   console.log("uploading image");
-  console.log(req.body);
-  const base64str = req.body.imageFile.replace("data:image/jpeg;base64,", "");
-  console.log(base64str)
+  //   console.log(req.body);
+  const base64str = req.body.imageFile.replace(
+    /^data:image\/[a-z]+;base64,/,
+    ""
+  );
+  //   console.log(base64str)
+  require("fs").writeFile("out.jpeg", base64str, "base64", function (err) {
+    console.log(err);
+  });
   const buf = Buffer.from(base64str, "base64");
-  console.log(buf)
+  //   console.log(buf)
   const image = await Jimp.read(buf);
-  console.log(image)
+  console.log(image);
 
   // rotate Function having a rotation as 90
-  let data = {rotatedImage: ''}
+  let data = { rotatedImage: "" };
   image.rotate(90).getBase64(Jimp.MIME_JPEG, function (err, src) {
     console.log(src);
-    data.rotatedImage = src
+    data.rotatedImage = src;
   });
-  res.send(data)
+
+  res.status(200).send(data);
 });
 
 // Require the Routes API
